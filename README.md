@@ -9,6 +9,14 @@ The model reconciles decentralized individual decision-making with stable assign
 - User compatibility constraints
 - Real-world spatial networks (OSMNX)
 
+## 📁 Data Requirements
+**Note:** The raw simulation data files (`.parquet` format) are confidential and are not included in this repository. 
+To run the simulations, you must provide your own data in the `data/` and `idf_simulation/data/` directories, including:
+- `od_matrix_insee.parquet`
+- `od_matrix_iris.parquet`
+- `communes_medoids.parquet`
+- `communes_free_flow_travel_times.parquet`
+
 ## 🚀 Key Features
 - **Scalability:** Handles large-scale networks with nearly linear computational growth.
 - **Duality Analysis:** Incorporates shadow price analysis for seat scarcity and passenger rent.
@@ -19,8 +27,5 @@ The model reconciles decentralized individual decision-making with stable assign
 - **Network Analysis:** NetworkX, OSMNX
 - **Data Handling:** Pandas, NumPy, Parquet
 - **Visualization:** Matplotlib, Seaborn
-
-## 📊 Results
-Preliminary simulations on the IDF network demonstrate the efficiency of the stable matching approach in improving vehicle occupancy rates while respecting individual temporal constraints.
 
 *Developed by Viery Naoussi under the direction of Pr. André de Palma (Thema, CY Cergy Paris Université).*
