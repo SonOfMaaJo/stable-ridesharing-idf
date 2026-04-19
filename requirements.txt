@@ -1,0 +1,8 @@
+pandas
+numpy
+shapely
+scipy
+networkx
+tqdm
+pyarrow
+fastparquet

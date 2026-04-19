@@ -1,0 +1,150 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{geometry}
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+
+\title{\textbf{Analyse de l'Impact de la Compatibilité Sociale sur l'Efficacité du Covoiturage Urbain}}
+\author{Projet Memory - Simulation Multi-Agents}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Ce rapport présente une étude par simulation de l'impact des contraintes sociales sur un système de covoiturage urbain. En comparant deux algorithmes d'affectation (Glouton et Optimal) sur une population allant jusqu'à 500 passagers, nous démontrons que la compatibilité sociale agit comme un multiplicateur de capacité critique. Les résultats montrent que dans une société \og stricte \fg{} (faible compatibilité), même une offre de transport abondante ne suffit pas à satisfaire la demande, tandis qu'une société \og flexible \fg{} permet de doubler le taux de remplissage des véhicules.
+\end{abstract}
+
+\section{Introduction}
+Le covoiturage dynamique est une réponse prometteuse à la congestion urbaine. Cependant, la plupart des modèles théoriques supposent que les passagers sont des entités interchangeables. En réalité, le facteur humain (genre, âge, notation, préférences sociales) crée des barrières invisibles mais rigides : c'est la \textbf{compatibilité sociale}.
+
+L'objectif de cette étude est de quantifier le coût de cette \og exigence sociale \fg{} en termes de perte économique collective et de passagers non servis.
+
+\section{Définition des Concepts et Modèle}
+
+\subsection{Environnement de Simulation}
+\begin{itemize}
+    \item \textbf{Grille de Manhattan (40x40)} : L'espace urbain est modélisé par une grille où les déplacements se font uniquement horizontalement et verticalement.
+    \item \textbf{Population} : 
+    \begin{itemize}
+        \item \textbf{Conducteurs (70 agents)} : Ils suivent des trajets fixes rectilignes (\og en L \fg{}) et ne font aucun détour. Capacité = 4 passagers.
+        \item \textbf{Passagers (50 à 500 agents)} : Ils cherchent à aller d'un point A à un point B en minimisant leur \og coût généralisé \fg{}.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Concepts Clés}
+\begin{enumerate}
+    \item \textbf{Gain Social (Économie Collective)} : Différence entre le coût du trajet \og à pied \fg{} (référence) et le coût du trajet en \og covoiturage \fg{}. L'objectif du système est de maximiser la somme de ces gains pour toute la population.
+    \item \textbf{Compatibilité Sociale ($P_{compat}$)} : Probabilité que deux individus acceptent de voyager ensemble.
+    \item \textbf{Contrainte de Clique} : Pour qu'un groupe de passagers partage une voiture, ils doivent être compatibles \textbf{deux à deux}.
+\end{enumerate}
+
+\section{Algorithmes d'Affectation}
+
+Cette étude compare deux approches fondamentales pour résoudre le problème d'appariement.
+
+\subsection{1. Algorithme Glouton (Greedy)}
+\textbf{Mécanisme :}
+Cet algorithme heuristique procède de manière itérative :
+\begin{enumerate}
+    \item Calculer le \textbf{Gain} potentiel pour chaque paire (Conducteur, Passager) possible.
+    \item Trier toutes ces paires par gain décroissant.
+    \item Sélectionner la meilleure paire disponible compatible avec les passagers déjà présents.
+    \item Répéter jusqu'à épuisement des offres.
+\end{enumerate}
+\textbf{Limite :} Il est \og myope \fg{}. Il peut choisir un passager rentable isolément mais qui bloque l'accès à une combinaison de plusieurs passagers plus intéressante collectivement.
+
+\subsection{2. Algorithme Optimal (ILP)}
+Nous posons le problème sous forme d'un programme linéaire en nombres entiers (Integer Linear Programming). L'objectif est de trouver l'optimum global.
+
+\textbf{Fonction Objectif :}
+\begin{equation}
+    \text{Maximiser } Z = \sum_{i \in Drivers} \sum_{j \in Passengers} G_{i,j} \cdot x_{i,j}
+\end{equation}
+
+\textbf{Contraintes Principales :}
+\begin{enumerate}
+    \item \textbf{Unicité :} $\sum_{i} x_{i,j} \le 1$ (Un passager par voiture max).
+    \item \textbf{Capacité :} $\sum_{j} x_{i,j} \le K$ (Voiture de capacité $K$).
+    \item \textbf{Compatibilité (Clique) :} $x_{i,j1} + x_{i,j2} \le 1$ si $j1$ et $j2$ sont incompatibles.
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{micro_manhattan.png}
+    \caption{Illustration sur grille Manhattan : L'algorithme Glouton (gauche) choisit le trajet rouge P0 isolant. L'algorithme Optimal (droite) privilégie la coopération des trajets verts P1 et P2.}
+    \label{fig:micro}
+\end{figure}
+
+\section{Résultats et Analyse Détaillée}
+
+\subsection{Visualisation des Solutions (Comparaison Visuelle)}
+La figure \ref{fig:simu_comp} présente une vue d'ensemble d'une solution trouvée par les deux méthodes sur une grille de taille moyenne. On observe que l'ILP parvient à \og densifier \fg{} les trajets verts (voiture) en regroupant mieux les passagers compatibles.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{ride_matching_simulation.py.png}
+    \caption{Comparaison des trajets générés par la méthode Greedy (gauche) et la méthode ILP (droite) sur un échantillon de 12 passagers.}
+    \label{fig:simu_comp}
+\end{figure}
+
+\subsection{Efficacité Globale à Grande Échelle}
+Nous avons simulé un système avec \textbf{70 conducteurs} face à une demande variant de 50 à 500 passagers.
+La figure \ref{fig:large_scale} montre que l'algorithme ILP surclasse systématiquement le Glouton. L'écart se creuse avec la densité, prouvant que l'optimisation mathématique est indispensable pour gérer la complexité combinatoire des grandes villes.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{large_scale_comparison.png}
+    \caption{Comparaison des performances à grande échelle (Greedy vs ILP).}
+    \label{fig:large_scale}
+\end{figure}
+
+\subsection{Impact sur le Temps de Trajet (Expérience Usager)}
+Pour l'usager, le critère décisif est le temps gagné.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{time_impact_analysis.png}
+    \caption{Évolution du temps de trajet moyen en fonction de la compatibilité (500 Passagers).}
+    \label{fig:time}
+\end{figure}
+La simulation montre que le temps de trajet moyen chute drastiquement pour les covoitureurs. Globalement, le service plafonne à 280 places (capacité système), ce qui explique la stabilisation des courbes à haute compatibilité.
+
+\subsection{Remplissage et Paradoxe de la Capacité}
+Est-il utile d'avoir de grandes voitures (5 places) si les gens sont peu sociables ?
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{advanced_impact_analysis.png}
+    \caption{Taux de service et Remplissage moyen selon la capacité du véhicule (500 Passagers).}
+    \label{fig:advanced}
+\end{figure}
+L'analyse révèle un effet de seuil : en dessous de 20\% de compatibilité, la capacité du véhicule n'a \textbf{aucun impact}. Ce n'est qu'au-delà de 50\% de compatibilité que les véhicules de 5 places commencent à surclasser ceux de 2 places.
+
+\subsection{L'Effet de la Densité (Masse Critique)}
+Pouvons-nous compenser une faible sociabilité par une très forte demande (densité) ?
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{density_impact.png}
+    \caption{La densité compense-t-elle l'exigence sociale ? (Simulation jusqu'à 500 Passagers).}
+    \label{fig:density}
+\end{figure}
+
+La réponse est nuancée :
+\begin{itemize}
+    \item \textbf{Société Stricte (0.2) :} La densité échoue. Le remplissage sature prématurément.
+    \item \textbf{Société Moyenne (0.5) :} La densité fonctionne. Avec 500 passagers, le système atteint des performances similaires à une société flexible.
+\end{itemize}
+
+\section{Conclusion}
+Cette étude démontre que l'efficacité du covoiturage repose sur trois piliers interdépendants :
+\begin{enumerate}
+    \item \textbf{L'Algorithme :} L'optimisation globale (ILP) offre un gain de 15-20\%.
+    \item \textbf{La Masse Critique :} La densité de demande permet de mitiger une compatibilité sociale moyenne.
+    \item \textbf{La Confiance :} C'est le facteur limitant absolu. Sans un socle de compatibilité minimale, le système ne peut pas décoller.
+\end{enumerate}
+
+\end{document}

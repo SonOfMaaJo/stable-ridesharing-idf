@@ -1,0 +1,125 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\title{Modélisation du Problème de Covoiturage par un problème de Matching avec Coût}
+\author{NAOUSSI DJOUMSSI Viery}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+Ce document définit formellement le problème de covoiturage par un problème de matching "many-to-one" car chaque passagé est affecté à une voiture unique et une voiture peut acceuillir plusieurs passager.
+\section{Définition des Concepts et Variables}
+
+\subsection{Les Agents et le Matching Many-to-One}
+Le problème est modélisé comme un \textbf{matching Many-to-One} (plusieurs-à-un) de l'ensemble $P$ vers l'ensemble $D'$ où :
+\begin{itemize}
+    \item $P = \{j_1, ..., j_n\}$ l'ensemble des passagers.
+    \item $D' = D \cup F$ l'ensemble étendu des véhicules, où $D$ sont les conducteurs réels et $F = \{f_1, ..., f_n\}$ sont les \textbf{voitures fantômes} (une par passager).
+\end{itemize}
+
+\subsection{Variables de Décision}
+On définit la variable binaire $x_{i,j}$ pour tout $i \in D'$ et $j \in P$ :
+\begin{equation}
+    x_{i,j} = \begin{cases}
+    1 & \text{si le passager } j \text{ est affecté au véhicule } i \\
+    0 & \text{sinon}
+    \end{cases}
+\end{equation}
+
+\subsection{La Matrice de Coût $C_{i,j}$}
+$C_{i,j}$ représente le coût généralisé induit par l'affectation du passager $j$ au véhicule $i$. Sa valeur dépend de la nature du véhicule :
+\begin{equation}
+    C_{i,j} = \begin{cases}
+    C^C_{i,j} & \text{si } i \in D \text{ (Covoiturage)} \\
+    C^M_j & \text{si } i \in F \text{ et } i \text{ correspond à } j \text{ (Marche)} \\
+    +\infty & \text{si } i \in F \text{ et } i \text{ ne correspond pas à } j
+    \end{cases}
+\end{equation}
+
+\subsection{Désignations Temporelles}
+Pour chaque passager $j$, nous définissons les variables temporelles suivantes :
+\begin{itemize}
+    \item $t^h_j$ : l'heure à laquelle le passager quitte la maison.
+    \item $t^{c_i}_{m,j}$ : l'heure à laquelle le passager rencontre le conducteur $i$.
+    \item $tt^c_{i,j}$ : le temps total de trajet en covoiturage avec le conducteur $i$.
+    \item $tt^M_j$ : le temps total de marche si le passager décide de marcher jusqu'à sa destination.
+    \item $t^*_j$ : l'heure d'arrivée désirée du passager.
+    \item $t_{a,j}$ : l'heure d'arrivée réelle à destination.
+\end{itemize}
+
+\subsection{Définition Analytique des Coûts}
+Le coût est une fonction du temps passé en transport et de la ponctualité à l'arrivée.
+\begin{itemize}
+    \item \textbf{Coût de covoiturage} ($C^C_{i,j}$) :
+    \begin{equation}
+        C^C_{i,j} = \alpha^c \cdot tt^c_{i,j} + SDC_j + \alpha^M \cdot tt^M_{access,j}
+    \end{equation}
+    Où $tt^M_{access,j}$ est le temps de marche résiduel (accès/egress).
+    \item \textbf{Coût de marche} ($C^M_j$) :
+    \begin{equation}
+        C^M_j = \alpha^M \cdot tt^M_j + SDC_j
+    \end{equation}
+    Nous considérons que $tt^c_{i,j} < tt^{M}_j$ et $\alpha^c < \alpha^M$.
+\end{itemize}
+
+\section{Concepts de Compatibilité}
+
+\subsection{Compatibilité Temporelle}
+Le passager $j$ ne peut être pris en charge par le conducteur $i$ que si l'heure de rencontre $t^{c_i}_{m,j}$ respecte son heure de départ au plus tôt : $t^{c_i}_{m,j} \ge t^h_j$.
+
+\subsection{Compatibilité Sociale}
+Critère binaire ou probabiliste imposant une structure de clique : deux passagers affectés au même véhicule $i$ doivent être compatibles entre eux.
+
+\section{Le Schedule Delay Cost (SDC) : Analyse des Formes Possibles}
+
+Le $SDC$ mesure l'insatisfaction liée à la différence entre l'heure d'arrivée réelle ($t_a$) et l'heure souhaitée ($t^*$). Plusieurs modélisations sont possibles selon le comportement recherché :
+
+\begin{enumerate}
+    \item \textbf{Modèle Linéaire Symétrique} :
+    \begin{equation}
+        SDC(t_a) = \alpha \cdot |t^* - t_a|
+    \end{equation}
+    L'avance et le retard sont pénalisés de la même manière.
+
+    \item \textbf{Modèle Quadratique} :
+    \begin{equation}
+        SDC(t_a) = \alpha \cdot (t^* - t_a)^2
+    \end{equation}
+    Pénalise très lourdement les grands écarts.
+    \item \textbf{Modèle Asymétrique Linéaire (Small, 1982)} :
+    \begin{equation}
+        SDC(t_a) = \beta \cdot (t^* - t_a)^+ + \gamma \cdot (t_a - t^*)^+
+    \end{equation}
+    On considère généralement $\gamma > \alpha > \beta$ car être en retard est plus pénalisant (perte de productivité, rendez-vous manqué) qu'être en avance (temps d'attente passif).
+
+    \item \textbf{Modèle avec Pénalité Fixe de Retard} :
+    \begin{equation}
+        SDC(t_a) = \beta \cdot (t^* - t_a)^+ + \gamma \cdot (t_a - t^*)^+ + \theta \cdot \mathbb{1}_{t_a > t^*}
+    \end{equation}
+    Où $\theta$ est un coût fixe subi dès que l'heure d'arrivée dépasse $t^*$, indépendamment de la durée du retard.
+\end{enumerate}
+
+\section{Modélisation Mathématique (ILP)}
+
+\subsection{Fonction Objectif}
+\begin{equation}
+    \min Z = \sum_{i \in D'} \sum_{j \in P} x_{i,j} \cdot C_{i,j}
+\end{equation}
+
+\subsection{Contraintes}
+\begin{enumerate}
+    \item \textbf{Unicité} : $\forall j \in P, \sum_{i \in D'} x_{i,j} = 1$.
+    \item \textbf{Capacité} : $\forall i \in D, \sum_{j \in P} x_{i,j} \le K$.
+    \item \textbf{Clique} : $\forall i \in D, \forall (j_1, j_2) \in P^2$, si $j_1, j_2$ incompatibles, alors $x_{i,j_1} + x_{i,j_2} \le 1$.
+    \item \textbf{Compatibilité Temporelle} : $t^{c_i}_{m, j} \geq t^{h}_j$.
+    \item \textbf{Rationnalité individuelle} : si un passager $j$ est associé à un conducteur $i$ alors $C_j^M \geq C_{i, j}^C$.
+\end{enumerate}
+
+\end{document}

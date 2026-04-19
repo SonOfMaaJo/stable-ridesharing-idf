@@ -1,0 +1,102 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\title{Multimodal and Multi-Hop Modeling of Urban Ride-sharing: A Dynamic Matching Extension}
+\author{Model Proposal for Urban Policy Evaluation}
+\date{April 1, 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+This document formally defines a dynamic ride-sharing model integrated with multi-modal options and multi-hop capabilities. In this framework, ride-sharing acts as a complementary service to Public Transport (PT) and walking, providing a tool to evaluate the systemic efficiency of urban transport policies.
+
+\section{Network Structure and Transport Modes}
+
+\subsection{Transport Modes}
+For each passenger $p_j \in P$, three transport options are available:
+\begin{itemize}
+    \item \textbf{Walking (M):} The base mode for short distances or as a transfer link between motorized modes.
+    \item \textbf{Public Transport (TC):} High-capacity services operating on fixed lines with predetermined schedules.
+    \item \textbf{Ride-sharing (c):} Dynamic supply from drivers $d_i \in D$ following fixed itineraries without detours, offering available seats on specific segments of their route.
+\end{itemize}
+
+\subsection{Time-Space Graph}
+The network is modeled as a multimodal graph where edges represent movement opportunities. Ride-sharing edges are dynamic, existing only at the precise instant $t$ when a vehicle traverses a given segment. Walking ensures connectivity between nodes and access points to motorized networks.
+
+\section{Formal Definition of the Itinerary $\pi$}
+
+An itinerary $\pi$ for a passenger $p_j$ starting from an initial state $(t, x)$ toward a destination $dest_j$ is defined as a finite sequence of hops (or steps):
+\[ \pi = (s_1, s_2, \dots, s_n) \]
+Each hop $s_k$ is a quintuplet $s_k = (m_k, x_k, x_{k+1}, t_k^{dep}, t_k^{arr})$ where:
+\begin{itemize}
+    \item $m_k \in \{M, TC, c\}$ is the transport mode chosen for step $k$.
+    \item $x_k$ and $x_{k+1}$ are the start and end positions of the hop, respectively.
+    \item $t_k^{dep}$ and $t_k^{arr}$ are the departure and arrival times of the hop.
+\end{itemize}
+
+\subsection{Validity Properties}
+To be admissible, an itinerary $\pi$ must satisfy the following constraints:
+\begin{enumerate}
+    \item \textbf{Spatial Continuity:} $\forall k \in \{1, \dots, n-1\}, \quad x_{k+1} = x_{start}(s_{k+1})$.
+    \item \textbf{Temporal Continuity:} $\forall k \in \{1, \dots, n-1\}, \quad t_{k+1}^{dep} \ge t_k^{arr}$.
+    \item \textbf{Boundary Anchoring:} $x_1 = x$, $x_{n+1} = dest_j$, and $t_1^{dep} \ge t$.
+\end{enumerate}
+
+\section{Cost Functions per Segment}
+
+For simplicity, we denote $C(s_k) = C^{m_k}(s_k)$. The cost of a hop $s_k$ is a function of the mode $m_k$ and the temporal/spatial attributes of the step:
+\[ C(s_k) = C^{m_k}(t_k^{dep}, t_k^{arr}, x_k, x_{k+1}) \]
+
+The wait time $tt^{wait}$ at node $x_k$ is defined as $t_k^{dep} - t_{k-1}^{arr}$ (with $t_0^{arr} = t$ by convention).
+
+\subsection{Walking Cost ($m_k = M$)}
+\[ C^M(s_k) = \alpha^M \cdot (t_k^{arr} - t_k^{dep}) \]
+It represents the pure disutility of walking between $x_k$ and $x_{k+1}$.
+
+\subsection{Public Transport Cost ($m_k = TC$)}
+For a hop using a transit line, $x_k$ refers to the boarding station and $x_{k+1}$ to the alighting station:
+\[ C^{TC}(s_k) = \alpha^{TC} \cdot (t_k^{arr} - t_k^{dep}) + \beta_{wait} \cdot tt^{wait} + Price^{TC} \]
+
+\subsection{Ride-sharing Cost ($m_k = c$)}
+For a hop with a driver $d_i$, $x_k$ refers to the pickup point and $x_{k+1}$ to the drop-off point:
+\[ C^c(s_k) = \alpha^c \cdot (t_k^{arr} - t_k^{dep}) + \beta_{wait} \cdot tt^{wait} + Price^c_{jk} + C^{comp} \]
+Where $Price^c_{jk}$ is the payment for the segment $k$ and $C^{comp}$ is the social compatibility cost.
+
+\section{Schedule Delay Cost (SDC)}
+The SDC measures the temporal dissatisfaction at the final destination:
+\[ SDC(\pi) = SDC(t_n^{arr}, t^*_j) \]
+Where $t_n^{arr}$ is the final arrival time and $t^*_j$ the desired arrival time.
+
+\section{Dynamic Decision and Value of Continuation}
+
+\subsection{Continuation Value $V$}
+The continuation value $V$ is the minimum estimated cost to complete the trip from a given state, optimizing over the set of all possible future itineraries $\Pi$:
+\[ V(t, x, dest_j, t^*_j) = \min_{\pi \in \Pi} \left\{ \sum_{k=1}^n C(s_k) + SDC(\pi) \right\} \]
+
+\subsection{Decision Process}
+At any decision instant, the passenger $p_j$ at position $x$ selects the immediate hop $s_1$ that minimizes the sum of its cost and the continuation value from its arrival state:
+\[ \min_{s_1} \left( C(s_1) + V(t_1^{arr}, x_2, dest_j, t^*_j) \right) \]
+
+\section{Economic Surplus and Policy Evaluation}
+
+\subsection{Passenger Surplus ($SP_j$)}
+The gain in utility for passenger $p_j$ provided by the ride-sharing policy is the difference between the total disutility of the reference scenario (PT and walking only) and the multimodal scenario:
+\[ SP_j = \left[ \min_{\pi \in \Pi_{ref}} \left( \sum C(s) + SDC \right) \right] - \left[ \sum_{k \in \pi_j^*} C(s_k) + SDC(\pi_j^*) \right] \]
+Where $\pi_j^*$ is the optimal multimodal itinerary.
+
+\subsection{Driver Surplus ($SC_i$)}
+For a driver $d_i$, given the absence of detours, the surplus is the net financial gain across all passengers $j$ transported on segments $k$:
+\[ SC_i = \sum_{j \in P} \sum_{k \in \pi_j | m_k=c, \text{veh}=d_i} (Price^c_{jk} - \theta_i) \]
+Where $\theta_i$ represents the fixed penalty for each pickup/drop-off stop.
+
+\subsection{Total System Surplus ($Z_{system}$)}
+The systemic efficiency of the urban policy is measured by the aggregate surplus:
+\[ Z_{system} = \sum_{j \in P} SP_j + \sum_{i \in D} SC_i + \text{Externalities (CO2, Congestion)} \]
+
+\end{document}

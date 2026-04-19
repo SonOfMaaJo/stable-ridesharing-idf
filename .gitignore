@@ -1,0 +1,11 @@
+*.log
+*.aux
+*.out
+*.gz
+*.toc
+__pycache__/
+cache/
+.DS_Store
+*.parquet
+*.graphml
+*.tar.gz
